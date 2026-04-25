@@ -36,7 +36,21 @@ public final class Birds {
      * does not mutate the input.
      */
     public static Bird advance(Bird bird) {
-        return bird.withState(advanceState(bird.state()));
+        return replaceState(bird, advanceState(bird.state()));
+    }
+
+    /**
+     * Returns the given bird with its {@link BirdState} replaced. Dispatches
+     * over the sealed {@link Bird} hierarchy so the caller does not need to
+     * know which kind it holds; adding a new bird kind is enforced here at
+     * compile time. This is the cross-kind state-replacement helper that
+     * used to live as an abstract method on the {@link Bird} interface.
+     */
+    public static Bird replaceState(Bird bird, BirdState newState) {
+        return switch (bird) {
+            case Thord t -> new Thord(newState, t.bolt());
+            case Bulk b -> new Bulk(newState, b.size());
+        };
     }
 
     /**
@@ -56,10 +70,7 @@ public final class Birds {
         // against a vertical launch (vx == 0) producing NaN via atan(...).
         double newAngle = (vx != 0) ? Math.toDegrees(Math.atan(vy / vx)) : s.angle();
 
-        return s
-            .withPos(new Vec2(x, y))
-            .withAngle(newAngle)
-            .withTime(s.time() + TIME_STEP);
+        return s.withPos(new Vec2(x, y)).withAngle(newAngle).withTime(s.time() + TIME_STEP);
     }
 
     /**
@@ -70,16 +81,16 @@ public final class Birds {
     public static Bird knockBack(Bird bird) {
         BirdState s = bird.state();
         BirdState bounced = new BirdState(
-            s.pos(),                           // new spawn = current position
+            s.pos(), // new spawn = current position
             s.pos(),
             s.angle() + 180,
             -s.velocity(),
             s.gravity() + KNOCKBACK_GRAVITY_BUMP,
-            0,                                 // reset trajectory clock
+            0, // reset trajectory clock
             s.form(),
             s.skillActivated()
         );
-        return bird.withState(bounced);
+        return replaceState(bird, bounced);
     }
 
     /**
@@ -122,10 +133,7 @@ public final class Birds {
         // First activation tick: latch the skill, apply the velocity boost,
         // and spawn the bolt in front of Thord heading in his current direction.
         if (!s.skillActivated()) {
-            s = s
-                .withSkillActivated(true)
-                .withVelocity(s.velocity() + Thord.VELOCITY_BOOST)
-                .withForm(Form.USING_SKILL);
+            s = s.withSkillActivated(true).withVelocity(s.velocity() + Thord.VELOCITY_BOOST).withForm(Form.USING_SKILL);
             bolt = bolt.spawnedAt(s.pos().add(100, 0), s.angle());
         }
 
@@ -139,7 +147,8 @@ public final class Birds {
     }
 
     private static SkillResult useBulkSkill(Bulk bulk, List<Mouse> mice) {
-        BirdState s = bulk.state()
+        BirdState s = bulk
+            .state()
             .withSkillActivated(true)
             .withForm(Form.USING_SKILL)
             .withGravity(bulk.state().gravity() + Bulk.GRAVITY_GROWTH_PER_TICK);

@@ -159,7 +159,7 @@ final class WorldsTickTest {
         World w = freshThordRun().withPhase(Phase.FLYING);
         // Give the bird a non-zero launch state so it actually moves and
         // we can latch the skill without immediately ending the round.
-        Bird launched = w.bird().withState(w.bird().state().withVelocity(50).withAngle(45));
+        Bird launched = Birds.replaceState(w.bird(), w.bird().state().withVelocity(50).withAngle(45));
         World ready = w.withCurrentBirdReplaced(launched);
 
         World next = Worlds.tick(ready, SPACE_PRESSED, POWER_FRAMES);
@@ -180,7 +180,10 @@ final class WorldsTickTest {
         // first tick after launch reports no displacement; gameplay-wise
         // this matches the original game.)
         World base = freshThordRun().withPhase(Phase.FLYING);
-        Bird launched = base.bird().withState(base.bird().state().withVelocity(100).withAngle(45).withTime(1));
+        Bird launched = Birds.replaceState(
+            base.bird(),
+            base.bird().state().withVelocity(100).withAngle(45).withTime(1)
+        );
         World w = base.withCurrentBirdReplaced(launched);
 
         Vec2 before = w.bird().state().pos();
@@ -212,7 +215,7 @@ final class WorldsTickTest {
             s.form(),
             s.skillActivated()
         );
-        Bird overreached = base.bird().withState(past);
+        Bird overreached = Birds.replaceState(base.bird(), past);
         World w = base.withCurrentBirdReplaced(overreached);
 
         World next = Worlds.tick(w, IDLE, POWER_FRAMES);
@@ -242,7 +245,7 @@ final class WorldsTickTest {
             s.form(),
             s.skillActivated()
         );
-        Bird overreached = base.bird().withState(past);
+        Bird overreached = Birds.replaceState(base.bird(), past);
         World w = base.withCurrentBirdReplaced(overreached);
 
         World next = Worlds.tick(w, IDLE, POWER_FRAMES);
@@ -350,7 +353,7 @@ final class WorldsTickTest {
             s.form(),
             s.skillActivated()
         );
-        Bird overreached = base.bird().withState(past);
+        Bird overreached = Birds.replaceState(base.bird(), past);
         Mouse latched = base.mice().get(0).withJustGotHit(true);
         World w = base.withCurrentBirdReplaced(overreached).withMice(List.of(latched));
 
@@ -481,7 +484,7 @@ final class WorldsTickTest {
     @Test
     void tick_doesNotMutateInputWorld() {
         World w = freshTwoBirdRun().withPhase(Phase.FLYING);
-        Bird launched = w.bird().withState(w.bird().state().withVelocity(50).withAngle(45));
+        Bird launched = Birds.replaceState(w.bird(), w.bird().state().withVelocity(50).withAngle(45));
         World seeded = w.withCurrentBirdReplaced(launched);
 
         // Snapshot the relevant fields before the tick.

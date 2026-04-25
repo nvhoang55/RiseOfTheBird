@@ -71,11 +71,35 @@
         <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
         <versions-maven-plugin.version>2.21.0</versions-maven-plugin.version>
 
+        <!-- Compile-time annotation processor versions -->
+        <record-builder.version>52</record-builder.version>
+
         <!-- Test dependency versions -->
         <junit-jupiter.version>5.11.4</junit-jupiter.version>
     </properties>
 
     <dependencies>
+        <!--
+            RecordBuilder generates `with*` copy methods for annotated records
+            so we don't have to hand-write them. The `core` artifact carries
+            only the @RecordBuilder annotation and the marker `With` interface;
+            the actual code generation lives in the `processor` artifact, which
+            is configured below as an annotation-processor path on the compiler
+            plugin (so it is NOT packaged into the runtime jar).
+
+            Scope `provided` means the core jar (which contains the annotation
+            and the With marker interface that our records implement) is on the
+            compile classpath but is treated as supplied by the environment at
+            runtime. The annotation is retained at SOURCE level only, so no
+            classes from this dependency end up in the packaged jar.
+        -->
+        <dependency>
+            <groupId>io.soabase.record-builder</groupId>
+            <artifactId>record-builder-core</artifactId>
+            <version>${record-builder.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!--
             JUnit 5 (Jupiter) for unit tests against the pure logic layer.
             test scope only - never ships in the runtime jar.
@@ -183,7 +207,12 @@
                 </executions>
             </plugin>
 
-            <!-- Compiler: pin to release 21 with strict warnings. -->
+            <!--
+                Compiler: pin to release 21 with strict warnings, and run the
+                RecordBuilder annotation processor so every @RecordBuilder
+                record gets its companion builder + With interface generated
+                under target/generated-sources/annotations.
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -195,6 +224,13 @@
                         <arg>-Xlint:all</arg>
                         <arg>-parameters</arg>
                     </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>io.soabase.record-builder</groupId>
+                            <artifactId>record-builder-processor</artifactId>
+                            <version>${record-builder.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 

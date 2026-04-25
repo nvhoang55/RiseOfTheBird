@@ -1,5 +1,7 @@
 package com.riseofthebird.data;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
+
 /**
  * Two-dimensional vector with double-precision components.
  *
@@ -7,8 +9,8 @@ package com.riseofthebird.data;
  * transparent, and able to represent sub-pixel positions for physics. The
  * renderer casts back to {@code int} at the StdDraw boundary.
  */
-public record Vec2(double x, double y) {
-
+@RecordBuilder
+public record Vec2(double x, double y) implements Vec2Builder.With {
     public static final Vec2 ZERO = new Vec2(0, 0);
 
     public Vec2 {

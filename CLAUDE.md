@@ -60,7 +60,7 @@ The codebase follows the Goetz / Parlog DOP style for modern Java with a strict 
 The main flow lives in `src/main/java/com/riseofthebird/`:
 
 - **`App`** — parses optional `-Droster=...`, builds `List<Bird>` of fresh at-spawn birds via a small private `BirdKind` parser enum, and constructs `runtime.GameLoop`.
-- **`data/`** — every record, sealed interface, and enum. Contains zero behaviour beyond `with*` constructors and trivial derived accessors (`isAlive`, `isWon`, `hasMoreBirds`).
+- **`data/`** — every record, sealed interface, and enum. Contains zero hand-written behaviour beyond trivial derived accessors (`isAlive`, `isWon`, `hasMoreBirds`) and a few non-trivial helpers (`Lightning.spawnedAt`, `Lightning.markStruck`, `World.withCurrentBirdReplaced`). All `with*` copy methods are generated at compile time by the [RecordBuilder](https://github.com/Randgalt/record-builder) annotation processor via the `@RecordBuilder` annotation and the `XxxBuilder.With` marker interface — see "RecordBuilder" below.
 - **`logic/`** — every gameplay function as `static` methods on `*s`-named utility classes (`Birds`, `Mice`, `Lightnings`, `Controllers`, `Worlds`). Pure: no `StdDraw`, no clock reads, no static mutable state.
 - **`input/Input`** — `static InputSnapshot poll(InputSnapshot prev)`. The only impure step is reading `StdDraw.isKeyPressed`; the returned snapshot is an immutable value with edge-detection accessors.
 - **`render/Renderer`** — `static void render(World, Background)`. Dispatches over `Phase` and the sealed `Bird` hierarchy via exhaustive `switch` expressions and writes `StdDraw` calls. Holds zero instance state.
@@ -74,7 +74,7 @@ The main flow lives in `src/main/java/com/riseofthebird/`:
 | `Form` | enum | `REGULAR`, `USING_SKILL` — sprite frame index. |
 | `Phase` | enum | Round lifecycle: `READY`, `AIMING_ANGLE`, `AIMING_POWER`, `FLYING`, `GAME_OVER`. |
 | `BirdState` | record | Shared in-flight state every bird carries (spawn, pos, angle, velocity, gravity, time, form, skillActivated). |
-| `Bird` | sealed interface | `permits Thord, Bulk`. Defines `state()` and `withState(BirdState)`. |
+| `Bird` | sealed interface | `permits Thord, Bulk`. Defines `state()` only — cross-kind state replacement lives in `logic.Birds.replaceState(Bird, BirdState)`. |
 | `Thord` | record | `(BirdState state, Lightning bolt)` — fast bird with an independent projectile. |
 | `Bulk` | record | `(BirdState state, int size)` — heavyweight bird with a growing hitbox. |
 | `Lightning` | record | Thord's projectile (pos, angle, spawned, struck). `DORMANT` is the pre-spawn singleton. |
@@ -127,7 +127,7 @@ All drawing goes through `StdDraw` static calls. The canvas coordinate system is
 
 Two suites, all pure value comparisons (no AWT, no canvas, no asset files, no threads).
 
-- **`data/RecordValidationTest`** (28 cases) — compact-constructor checks (`Vec2` rejects NaN, `Mouse` rejects negative or out-of-range HP, `World` rejects null fields and out-of-range `currentBird`/`score`), defensive list copies (`World` snapshots roster and mice), `with*` immutability, and the singleton/identity properties of `Hit.Missed.INSTANCE` and `Lightning.DORMANT`.
+- **`data/RecordValidationTest`** (28 cases) — compact-constructor checks (`Vec2` rejects NaN, `Mouse` rejects negative or out-of-range HP, `World` rejects null fields and out-of-range `currentBird`/`score`), defensive list copies (`World` snapshots roster and mice), generated-`with*` immutability, and the singleton/identity properties of `Hit.Missed.INSTANCE` and `Lightning.DORMANT`.
 - **`logic/WorldsTickTest`** (22 cases) — drives `Worlds.tick` through every phase transition, scoring path, skill path, and replay reset. Each test seeds a `World`, ticks it once or a few times with synthetic `InputSnapshot` values, and asserts on the returned `World`. Includes a purity check that `tick` returns a new instance and does not mutate its input.
 
 Running `./mvnw test` should always be green; if it goes red, fix the test or fix the code before committing.
@@ -139,10 +139,29 @@ Running `./mvnw test` should always be green; if it goes red, fix the test or fi
 - **Adding a new mouse / boss:** drop a fresh `Mouse` value into `World.mice()`; the logic layer iterates the list generically. There is no special-case code path for individual boss kinds today.
 - **Adding a new asset:** drop it under `src/main/resources/assets/<group>/` and reference it via `Assets.require(...)` (mandatory) or `Assets.optional(...)` (graceful no-op). It will be picked up by the next `mvn package` and shipped inside the packaged jar.
 - **Skill that spawns a projectile:** see `Thord` + `Lightning` for the canonical pattern. The projectile is a record stored as a component on the bird's record, the physics live in `logic/Lightnings`, and the renderer's bird-switch case for the new bird kind is responsible for drawing the effect.
-- **Mutability rule:** nothing in `data/` or `logic/` should mutate any field, period. State transitions return new records via `with*` constructors. The only mutable state in the entire codebase is `GameLoop.current` (a `World`) and `GameLoop.lastInput` (an `InputSnapshot`). If you find yourself reaching for a mutable field anywhere else, reconsider.
+- **Mutability rule:** nothing in `data/` or `logic/` should mutate any field, period. State transitions return new records via the RecordBuilder-generated `with*` methods. The only mutable state in the entire codebase is `GameLoop.current` (a `World`) and `GameLoop.lastInput` (an `InputSnapshot`). If you find yourself reaching for a mutable field anywhere else, reconsider.
 - **Phase transitions:** only add transitions inside `Worlds.tick`'s phase handlers. Never transition during `Renderer.render`.
 - **Tick rate** is fixed at `GameLoop.TICK_MS` (30 ms). Per-phase pauses no longer exist; visual speeds are uniform.
 - **`BirdState.pos` is recomputed each tick** from `vx*time + spawn.x()`. Setting `pos` on its own does not survive the next `Birds.advance` call; tests and any code that needs a bird at a specific world location must set `spawn` (the trajectory anchor), not `pos`. See the inline comments in `WorldsTickTest.flying_overreached_*` for the captured gotcha.
 - **At `time == 0`** the parabola yields exactly the spawn point, so the first FLYING tick after launch reports no displacement. This matches the original game; tests that observe motion seed `time = 1` to skip the no-op first tick.
 - **Asset paths** are case-sensitive on Linux. Lower-case all new resource paths.
-- **`with*` constructors on records:** they exist because Java 21 lacks a `with` keyword (JEP 468 is preview). Each one returns a new record with the named component replaced — this is *not* re-encapsulation, it is a shorthand for `new Foo(a, b, newC, d, e)`. Do not add behaviour beyond field replacement to these.
+- **`with*` methods on records:** generated at compile time by RecordBuilder, not hand-written. Annotate the record with `@RecordBuilder` and have it `implements XxxBuilder.With` — the processor emits `withFoo(...)` for each component returning a new record with that component replaced. The generated companion class is `XxxBuilder` under `target/generated-sources/annotations/`. Java 21 has no native `with` keyword (JEP 468 is preview); RecordBuilder fills the gap with a compile-time-only annotation processor (zero runtime dependency).
+- **Cross-kind state replacement on `Bird`:** the `Bird` interface deliberately does NOT declare a `withState` method. RecordBuilder generates `withState(BirdState)` on each concrete record's `With` interface returning the concrete type (`Thord`/`Bulk`), but a `Bird`-typed reference can't reach those covariant overrides. Use `logic.Birds.replaceState(Bird, BirdState)` instead — it dispatches over the sealed hierarchy. Adding a new bird kind forces this switch to be updated.
+
+### RecordBuilder
+
+The data layer uses [RecordBuilder](https://github.com/Randgalt/record-builder) (`io.soabase.record-builder` v52) as a compile-time annotation processor to generate `with*` copy methods for every record. The dependency is wired in `pom.xml` two ways:
+
+1. As a `provided`-scope dependency of `record-builder-core`, so the `@RecordBuilder` annotation and the `With` marker interface are on the compile classpath. The annotation is `SOURCE`-retained, so nothing from this jar ends up in the runtime artefact.
+2. As an `<annotationProcessorPath>` entry on `maven-compiler-plugin` for `record-builder-processor`, which is what actually generates the code under `target/generated-sources/annotations/`.
+
+To add `with*` to a new record:
+
+```java
+@RecordBuilder
+public record Foo(int x, String y) implements FooBuilder.With {}
+```
+
+The processor emits `FooBuilder.java` with a `With` interface providing default `withX(int x)` and `withY(String y)` methods. Run `./mvnw compile` once after annotating to make the generated `FooBuilder` symbol resolve in your IDE.
+
+The runtime jar contains the *generated* `XxxBuilder` classes (since they live in our package) but none of RecordBuilder's own classes.

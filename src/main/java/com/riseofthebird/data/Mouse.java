@@ -1,5 +1,7 @@
 package com.riseofthebird.data;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
+
 /**
  * Mouseleficent: the boss enemy.
  *
@@ -7,6 +9,9 @@ package com.riseofthebird.data;
  * range, taking up to {@link #MAX_HP} hits before dying. Each hit shrinks
  * the sprite, increases the oscillation step, and advances the sprite-array
  * index so the rendered frame matches the remaining HP.
+ *
+ * <p>{@code with*} copy methods are generated at compile time by
+ * RecordBuilder via the {@link MouseBuilder.With} marker interface.
  *
  * @param spawn      anchor point around which the mouse oscillates
  * @param pos        current position in world coordinates
@@ -17,6 +22,7 @@ package com.riseofthebird.data;
  * @param justGotHit latches after a hit so a single bird cannot deal damage
  *                   every tick; cleared between rounds
  */
+@RecordBuilder
 public record Mouse(
     Vec2 spawn,
     Vec2 pos,
@@ -25,8 +31,7 @@ public record Mouse(
     int step,
     int distance,
     boolean justGotHit
-) {
-
+) implements MouseBuilder.With {
     /** Maximum hit points a freshly-spawned boss has. */
     public static final int MAX_HP = 3;
 
@@ -62,42 +67,10 @@ public record Mouse(
 
     /** Builds a fresh Mouseleficent boss at the canonical spawn position. */
     public static Mouse defaultBoss() {
-        return new Mouse(
-            DEFAULT_SPAWN,
-            DEFAULT_SPAWN,
-            MAX_HP,
-            DEFAULT_SIZE,
-            INITIAL_STEP,
-            0,
-            false
-        );
+        return new Mouse(DEFAULT_SPAWN, DEFAULT_SPAWN, MAX_HP, DEFAULT_SIZE, INITIAL_STEP, 0, false);
     }
 
     public boolean isAlive() {
         return hp > 0;
-    }
-
-    public Mouse withPos(Vec2 newPos) {
-        return new Mouse(spawn, newPos, hp, size, step, distance, justGotHit);
-    }
-
-    public Mouse withHp(int newHp) {
-        return new Mouse(spawn, pos, newHp, size, step, distance, justGotHit);
-    }
-
-    public Mouse withSize(int newSize) {
-        return new Mouse(spawn, pos, hp, newSize, step, distance, justGotHit);
-    }
-
-    public Mouse withStep(int newStep) {
-        return new Mouse(spawn, pos, hp, size, newStep, distance, justGotHit);
-    }
-
-    public Mouse withDistance(int newDistance) {
-        return new Mouse(spawn, pos, hp, size, step, newDistance, justGotHit);
-    }
-
-    public Mouse withJustGotHit(boolean newJustGotHit) {
-        return new Mouse(spawn, pos, hp, size, step, distance, newJustGotHit);
     }
 }

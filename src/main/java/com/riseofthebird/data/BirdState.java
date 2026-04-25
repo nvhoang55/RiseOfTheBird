@@ -1,5 +1,7 @@
 package com.riseofthebird.data;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
+
 /**
  * Physical and visual state every bird carries in flight.
  *
@@ -17,6 +19,9 @@ package com.riseofthebird.data;
  * and {@link Bird} subtypes compose it with their kind-specific extras
  * (e.g. {@link Lightning} for {@code Thord}).
  *
+ * <p>{@code with*} copy methods are generated at compile time by
+ * RecordBuilder via the {@link BirdStateBuilder.With} marker interface.
+ *
  * @param spawn          launch position; never moves once a round starts
  * @param pos            current position in world coordinates
  * @param angle          current heading in degrees
@@ -26,6 +31,7 @@ package com.riseofthebird.data;
  * @param form           which sprite frame to render
  * @param skillActivated true once the player has triggered the skill this round
  */
+@RecordBuilder
 public record BirdState(
     Vec2 spawn,
     Vec2 pos,
@@ -35,41 +41,12 @@ public record BirdState(
     double time,
     Form form,
     boolean skillActivated
-) {
-
+) implements BirdStateBuilder.With {
     /** Default gravity used by every bird at spawn. */
     public static final double INITIAL_GRAVITY = 1.5;
 
     /** Builds the at-spawn state for a bird launched from the given coordinate. */
     public static BirdState atSpawn(Vec2 spawn) {
         return new BirdState(spawn, spawn, 0, 0, INITIAL_GRAVITY, 0, Form.REGULAR, false);
-    }
-
-    public BirdState withPos(Vec2 newPos) {
-        return new BirdState(spawn, newPos, angle, velocity, gravity, time, form, skillActivated);
-    }
-
-    public BirdState withAngle(double newAngle) {
-        return new BirdState(spawn, pos, newAngle, velocity, gravity, time, form, skillActivated);
-    }
-
-    public BirdState withVelocity(double newVelocity) {
-        return new BirdState(spawn, pos, angle, newVelocity, gravity, time, form, skillActivated);
-    }
-
-    public BirdState withGravity(double newGravity) {
-        return new BirdState(spawn, pos, angle, velocity, newGravity, time, form, skillActivated);
-    }
-
-    public BirdState withTime(double newTime) {
-        return new BirdState(spawn, pos, angle, velocity, gravity, newTime, form, skillActivated);
-    }
-
-    public BirdState withForm(Form newForm) {
-        return new BirdState(spawn, pos, angle, velocity, gravity, time, newForm, skillActivated);
-    }
-
-    public BirdState withSkillActivated(boolean newSkillActivated) {
-        return new BirdState(spawn, pos, angle, velocity, gravity, time, form, newSkillActivated);
     }
 }

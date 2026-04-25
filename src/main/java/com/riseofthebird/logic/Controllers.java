@@ -37,7 +37,7 @@ public final class Controllers {
 
     /** Locks the bird's launch angle to whatever value the controller is currently displaying. */
     public static Bird applyAngle(ControllerState s, Bird bird) {
-        return bird.withState(bird.state().withAngle(s.angle()));
+        return Birds.replaceState(bird, bird.state().withAngle(s.angle()));
     }
 
     // ---- Power ---------------------------------------------------------
@@ -63,15 +63,12 @@ public final class Controllers {
         }
         int newFrame = frame + direction;
         double newVelocity = newFrame * ControllerState.VELOCITY_MULTIPLIER;
-        return s
-            .withPowerFrame(newFrame)
-            .withPowerDirection(direction)
-            .withVelocity(newVelocity);
+        return s.withPowerFrame(newFrame).withPowerDirection(direction).withVelocity(newVelocity);
     }
 
     /** Locks the bird's launch velocity to whatever value the controller is currently displaying. */
     public static Bird applyPower(ControllerState s, Bird bird) {
-        return bird.withState(bird.state().withVelocity(s.velocity()));
+        return Birds.replaceState(bird, bird.state().withVelocity(s.velocity()));
     }
 
     // ---- Skill ---------------------------------------------------------

@@ -1,5 +1,6 @@
 package com.riseofthebird.data;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
 import java.util.List;
 
 /**
@@ -15,6 +16,13 @@ import java.util.List;
  * {@code World} (typically via the {@code with*} helpers) rather than
  * mutating the lists in place.
  *
+ * <p>{@code with*} copy methods are generated at compile time by
+ * RecordBuilder via the {@link WorldBuilder.With} marker interface. The one
+ * non-trivial helper, {@link #withCurrentBirdReplaced(Bird)}, stays
+ * hand-written because it touches two components at once (it swaps the bird
+ * at index {@link #currentBird} inside {@link #roster}, which is not a
+ * simple component-level update).
+ *
  * @param roster       every bird the player will launch this run, in order
  * @param currentBird  index into {@link #roster} of the bird currently being
  *                     aimed or flying; {@code roster.size()} once exhausted
@@ -26,6 +34,7 @@ import java.util.List;
  *                     condition; only meaningful in the {@link Phase#GAME_OVER}
  *                     phase
  */
+@RecordBuilder
 public record World(
     List<Bird> roster,
     int currentBird,
@@ -34,8 +43,7 @@ public record World(
     Phase phase,
     int score,
     boolean playerWon
-) {
-
+) implements WorldBuilder.With {
     /** Number of hits required to win a run. */
     public static final int WIN_THRESHOLD = 3;
 
@@ -53,9 +61,7 @@ public record World(
             throw new IllegalArgumentException("phase must not be null");
         }
         if (currentBird < 0 || currentBird > roster.size()) {
-            throw new IllegalArgumentException(
-                "currentBird out of range [0, " + roster.size() + "]: " + currentBird
-            );
+            throw new IllegalArgumentException("currentBird out of range [0, " + roster.size() + "]: " + currentBird);
         }
         if (score < 0) {
             throw new IllegalArgumentException("score must not be negative: " + score);
@@ -67,15 +73,7 @@ public record World(
 
     /** Builds a fresh start-of-run world from the given roster of birds. */
     public static World freshRun(List<Bird> roster) {
-        return new World(
-            roster,
-            0,
-            List.of(Mouse.defaultBoss()),
-            ControllerState.freshRound(),
-            Phase.READY,
-            0,
-            false
-        );
+        return new World(roster, 0, List.of(Mouse.defaultBoss()), ControllerState.freshRound(), Phase.READY, 0, false);
     }
 
     /** True while there is still a bird available for the next round. */
@@ -98,38 +96,15 @@ public record World(
         return score >= WIN_THRESHOLD || allMiceDead();
     }
 
-    public World withRoster(List<Bird> newRoster) {
-        return new World(newRoster, currentBird, mice, controller, phase, score, playerWon);
-    }
-
-    public World withCurrentBird(int newCurrentBird) {
-        return new World(roster, newCurrentBird, mice, controller, phase, score, playerWon);
-    }
-
-    public World withMice(List<Mouse> newMice) {
-        return new World(roster, currentBird, newMice, controller, phase, score, playerWon);
-    }
-
-    public World withController(ControllerState newController) {
-        return new World(roster, currentBird, mice, newController, phase, score, playerWon);
-    }
-
-    public World withPhase(Phase newPhase) {
-        return new World(roster, currentBird, mice, controller, newPhase, score, playerWon);
-    }
-
-    public World withScore(int newScore) {
-        return new World(roster, currentBird, mice, controller, phase, newScore, playerWon);
-    }
-
-    public World withPlayerWon(boolean newPlayerWon) {
-        return new World(roster, currentBird, mice, controller, phase, score, newPlayerWon);
-    }
-
     /**
      * Replaces the bird at {@link #currentBird} with the given one. Throws
      * if the roster has been exhausted; callers should check {@link #hasMoreBirds()}
      * first.
+     *
+     * <p>This is the one with-style helper that stays hand-written because it
+     * touches two record components at once: it computes a new {@link #roster}
+     * with the bird at {@link #currentBird} swapped, and returns a new
+     * {@code World} carrying that roster.
      */
     public World withCurrentBirdReplaced(Bird newBird) {
         if (!hasMoreBirds()) {

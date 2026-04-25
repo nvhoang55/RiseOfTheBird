@@ -1,5 +1,7 @@
 package com.riseofthebird.data;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
+
 /**
  * Bulk: a heavyweight bird whose skill grows its hitbox and increases gravity
  * mid-flight, causing a steep "stomp" descent.
@@ -8,12 +10,18 @@ package com.riseofthebird.data;
  * physics in place (within {@link BirdState}). Damage is registered through
  * the standard bird-mouse collision check, not via an independent projectile.
  *
- * @param state  shared in-flight physics and visual state
- * @param size   current render and hitbox size in world units; grows each
- *               tick the skill is active
+ * <p>{@code with*} copy methods (including the {@link Bird#withState}
+ * contract method) are generated at compile time by RecordBuilder via the
+ * {@link BulkBuilder.With} marker interface. The generated
+ * {@code withState(BirdState)} returns {@code Bulk}, which covariantly
+ * satisfies {@link Bird#withState(BirdState)}'s {@code Bird} return type.
+ *
+ * @param state shared in-flight physics and visual state
+ * @param size  current render and hitbox size in world units; grows each
+ *              tick the skill is active
  */
-public record Bulk(BirdState state, int size) implements Bird {
-
+@RecordBuilder
+public record Bulk(BirdState state, int size) implements Bird, BulkBuilder.With {
     /** Spawn position shared with {@link Thord}, mirroring the original game. */
     public static final Vec2 SPAWN = new Vec2(-700, -300);
 
@@ -29,14 +37,5 @@ public record Bulk(BirdState state, int size) implements Bird {
     /** Builds a fresh Bulk at his spawn point at the initial size. */
     public static Bulk atSpawn() {
         return new Bulk(BirdState.atSpawn(SPAWN), INITIAL_SIZE);
-    }
-
-    @Override
-    public Bird withState(BirdState newState) {
-        return new Bulk(newState, size);
-    }
-
-    public Bulk withSize(int newSize) {
-        return new Bulk(state, newSize);
     }
 }

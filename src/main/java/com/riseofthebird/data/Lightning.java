@@ -1,5 +1,7 @@
 package com.riseofthebird.data;
 
+import io.soabase.recordbuilder.core.RecordBuilder;
+
 /**
  * Thord's skill projectile.
  *
@@ -11,13 +13,16 @@ package com.riseofthebird.data;
  * from {@link Bulk}: the type system makes "a Bulk with a lightning bolt"
  * unrepresentable, which is the point.
  *
+ * <p>{@code with*} copy methods are generated at compile time by
+ * RecordBuilder via the {@link LightningBuilder.With} marker interface.
+ *
  * @param pos     current position in world coordinates
  * @param angle   heading in degrees, fixed at spawn time
  * @param spawned true once the bolt has been emitted by Thord
  * @param struck  true once the bolt has hit a mouse and dissipated
  */
-public record Lightning(Vec2 pos, double angle, boolean spawned, boolean struck) {
-
+@RecordBuilder
+public record Lightning(Vec2 pos, double angle, boolean spawned, boolean struck) implements LightningBuilder.With {
     /** Per-tick travel speed in world units. */
     public static final double SPEED = 170;
 
@@ -27,18 +32,12 @@ public record Lightning(Vec2 pos, double angle, boolean spawned, boolean struck)
     /** A lightning bolt that has not yet been spawned by its owner. */
     public static final Lightning DORMANT = new Lightning(Vec2.ZERO, 0, false, false);
 
-    public Lightning withPos(Vec2 newPos) {
-        return new Lightning(newPos, angle, spawned, struck);
-    }
-
-    public Lightning withAngle(double newAngle) {
-        return new Lightning(pos, newAngle, spawned, struck);
-    }
-
+    /** Spawns the bolt at the given position and heading. */
     public Lightning spawnedAt(Vec2 newPos, double newAngle) {
         return new Lightning(newPos, newAngle, true, false);
     }
 
+    /** Latches the bolt as having struck a target. */
     public Lightning markStruck() {
         return new Lightning(pos, angle, spawned, true);
     }
