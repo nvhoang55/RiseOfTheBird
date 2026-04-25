@@ -1,0 +1,89 @@
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+target/
+build/
+dist/
+
+# Maven Shade plugin byproduct (kept here in case shade is ever re-introduced).
+dependency-reduced-pom.xml
+
+# Maven local Wrapper distribution cache (when committed alongside the project).
+.mvn/wrapper/dists/
+
+# ---------------------------------------------------------------------------
+# IDEs & editors
+# ---------------------------------------------------------------------------
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.apt_generated_test/
+
+# VS Code
+.vscode/
+
+# NetBeans
+nbproject/private/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# JEnv
+.java-version
+
+# ---------------------------------------------------------------------------
+# OS detritus
+# ---------------------------------------------------------------------------
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+~$*
+
+# Linux
+*~
+.fuse_hidden*
+.nfs*
+
+# ---------------------------------------------------------------------------
+# Java compile output (shouldn't appear with Maven, but guard anyway)
+# ---------------------------------------------------------------------------
+*.class
+
+# Generic jars are noise; the Maven Wrapper jar is committed on purpose.
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Native image / hsperfdata
+hs_err_pid*
+replay_pid*
+*.hprof
+
+# ---------------------------------------------------------------------------
+# Logs & temp files
+# ---------------------------------------------------------------------------
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.orig

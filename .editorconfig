@@ -1,0 +1,61 @@
+# EditorConfig — https://editorconfig.org
+# Top-most EditorConfig file for the repo.
+root = true
+
+# Defaults for every file unless overridden below.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Java sources follow the conventional 4-space indent (already the default,
+# but pinned here explicitly so it can't drift).
+[*.java]
+indent_size = 4
+max_line_length = 120
+
+# Maven POMs and other XML use 4-space indentation to match Apache Maven's
+# own published POMs.
+[*.xml]
+indent_size = 4
+
+# Properties files are conventionally tab-free with 2-space indentation;
+# also no trailing whitespace trimming for keys that intentionally end with a space.
+[*.properties]
+indent_size = 2
+
+# Markdown is whitespace-sensitive: two trailing spaces on a line means
+# "hard line break", so don't strip trailing whitespace here.
+[*.md]
+indent_size = 2
+trim_trailing_whitespace = false
+
+# YAML demands spaces only and 2-space indentation by community convention.
+[*.{yml,yaml}]
+indent_size = 2
+
+# JSON ditto.
+[*.json]
+indent_size = 2
+
+# Shell scripts use 2-space indentation per Google Shell Style Guide; the
+# Maven Wrapper script (mvnw) is checked in and needs LF line endings.
+[*.sh]
+indent_size = 2
+
+# Windows batch files require CRLF line endings to be interpreted correctly
+# by cmd.exe.
+[*.{cmd,bat}]
+end_of_line = crlf
+indent_size = 2
+
+# Generated/vendored files: don't enforce style on these.
+[src/main/java/edu/princeton/cs/introcs/**]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+max_line_length = unset
