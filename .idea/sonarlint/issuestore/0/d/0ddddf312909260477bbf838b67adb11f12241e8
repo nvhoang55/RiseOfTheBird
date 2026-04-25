@@ -1,15 +1,0 @@
-
-ysquid:S00115"ZRename this constant name to match the regular expression '^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'.(å´­º8Óµ¥ƒ-
-Xsquid:S1118":Add a private constructor to hide the implicit public one.(ì½Ù8Óµ¥ƒ-
-~squid:S00115"ZRename this constant name to match the regular expression '^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$'.(Òàšäşÿÿÿÿ8Óµ¥ƒ-
-Ssquid:S1068D"0Remove this unused "currentFrame" private field.(“Ç¢Ñøÿÿÿÿ8Óµ¥ƒ-
-_squid:S21848"BCast one of the operands of this addition operation to a "double".(ÃÛ°<8Óµ¥ƒ-
-]squid:S1118":Add a private constructor to hide the implicit public one.(£øûÓÿÿÿÿÿ8Óµ¥ƒ-
-esquid:S2184d"BCast one of the operands of this addition operation to a "double".(¡ÎÃåúÿÿÿÿ8Óµ¥ƒ-
-fsquid:S21846"HCast one of the operands of this multiplication operation to a "double".(…Ïô×8Óµ¥ƒ-
-]squid:S1610":Convert the abstract class "Controller" into an interface.(£øûÓÿÿÿÿÿ8Óµ¥ƒ-
-]squid:S1118=":Add a private constructor to hide the implicit public one.(‘¤“üÿÿÿÿ8Óµ¥ƒ-
-]squid:S1118m":Add a private constructor to hide the implicit public one.(ª §âùÿÿÿÿ8Óµ¥ƒ-
-\squid:S1068G"9Remove this unused "arrowWidthChangeLevel" private field.(úØÖµùÿÿÿÿ8Óµ¥ƒ-
-~squid:S1450D"[Remove the "currentFrame" field and declare it as a local variable in the relevant methods.(“Ç¢Ñøÿÿÿÿ8Óµ¥ƒ-
-wsquid:S00120"ZRename this package name to match the regular expression '^[a-z_]+(\.[a-z_][a-z0-9_]*)*$'.(Ğíñæşÿÿÿÿ
