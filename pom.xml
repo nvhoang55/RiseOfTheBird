@@ -70,7 +70,23 @@
         <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
         <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
         <versions-maven-plugin.version>2.21.0</versions-maven-plugin.version>
+
+        <!-- Test dependency versions -->
+        <junit-jupiter.version>5.11.4</junit-jupiter.version>
     </properties>
+
+    <dependencies>
+        <!--
+            JUnit 5 (Jupiter) for unit tests against the pure logic layer.
+            test scope only - never ships in the runtime jar.
+        -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit-jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <!--
