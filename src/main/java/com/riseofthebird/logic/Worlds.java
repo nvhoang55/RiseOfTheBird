@@ -85,20 +85,16 @@ public final class Worlds {
         // While SPACE is held, the angle oscillates and is mirrored onto the bird.
         if (in.spaceDown()) {
             ctrl = Controllers.tickAngle(ctrl);
-            bird = Controllers.applyAngle(ctrl, bird);
+            bird = Controllers.applyAngle(ctrl.angle(), bird);
         }
 
-        World next = w
-            .withController(ctrl)
-            .withCurrentBirdReplaced(bird);
+        World next = w.withController(ctrl).withCurrentBirdReplaced(bird);
         next = withMiceAdvanced(next);
 
         // Releasing SPACE locks the angle and moves to the power phase.
         if (in.wasSpaceReleased()) {
-            bird = Controllers.applyAngle(ctrl, bird);
-            next = next
-                .withCurrentBirdReplaced(bird)
-                .withPhase(Phase.AIMING_POWER);
+            bird = Controllers.applyAngle(ctrl.angle(), bird);
+            next = next.withCurrentBirdReplaced(bird).withPhase(Phase.AIMING_POWER);
         }
         return next;
     }
@@ -118,10 +114,8 @@ public final class Worlds {
         next = withMiceAdvanced(next);
 
         if (in.wasSpaceReleased()) {
-            Bird launched = Controllers.applyPower(ctrl, next.bird());
-            next = next
-                .withCurrentBirdReplaced(launched)
-                .withPhase(Phase.FLYING);
+            Bird launched = Controllers.applyPower(ctrl.velocity(), next.bird());
+            next = next.withCurrentBirdReplaced(launched).withPhase(Phase.FLYING);
         }
         return next;
     }
@@ -159,16 +153,10 @@ public final class Worlds {
         bird = pass.bird();
         score += pass.hits();
 
-        World next = w
-            .withController(ctrl)
-            .withCurrentBirdReplaced(bird)
-            .withMice(mice)
-            .withScore(score);
+        World next = w.withController(ctrl).withCurrentBirdReplaced(bird).withMice(mice).withScore(score);
 
         boolean roundEnded =
-            Birds.isOverreached(bird, WORLD_WIDTH, WORLD_HEIGHT)
-                || score >= World.WIN_THRESHOLD
-                || next.allMiceDead();
+            Birds.isOverreached(bird, WORLD_WIDTH, WORLD_HEIGHT) || score >= World.WIN_THRESHOLD || next.allMiceDead();
 
         return roundEnded ? endRound(next) : next;
     }

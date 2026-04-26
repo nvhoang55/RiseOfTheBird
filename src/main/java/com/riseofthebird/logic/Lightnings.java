@@ -44,7 +44,7 @@ public final class Lightnings {
         Lightning nextBolt = bolt;
 
         for (Mouse mouse : mice) {
-            if (!hit && mouse.isAlive() && overlaps(bolt, mouse)) {
+            if (!hit && mouse.isAlive() && overlaps(bolt.pos(), mouse)) {
                 nextMice.add(Mice.takeDamage(mouse));
                 nextBolt = bolt.markStruck();
                 hit = true;
@@ -64,17 +64,14 @@ public final class Lightnings {
     /** Translates the bolt one tick along its heading. */
     private static Lightning step(Lightning bolt) {
         double angleRad = Math.toRadians(bolt.angle());
-        Vec2 next = bolt.pos().add(
-            Lightning.SPEED * Math.cos(angleRad),
-            Lightning.SPEED * Math.sin(angleRad)
-        );
+        Vec2 next = bolt.pos().add(Lightning.SPEED * Math.cos(angleRad), Lightning.SPEED * Math.sin(angleRad));
         return bolt.withPos(next);
     }
 
     /** Distance-based overlap check using the canonical {@code SIZE / 3} reach. */
-    private static boolean overlaps(Lightning bolt, Mouse mouse) {
+    private static boolean overlaps(Vec2 boltPos, Mouse mouse) {
         double reach = Lightning.SIZE / 3.0 + mouse.size() / 3.0;
-        return bolt.pos().distanceTo(mouse.pos()) <= reach;
+        return boltPos.distanceTo(mouse.pos()) <= reach;
     }
 
     /**

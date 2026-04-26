@@ -4,7 +4,6 @@ import com.riseofthebird.assets.Assets;
 import com.riseofthebird.assets.Sprites;
 import com.riseofthebird.data.Bird;
 import com.riseofthebird.data.Bulk;
-import com.riseofthebird.data.ControllerState;
 import com.riseofthebird.data.Form;
 import com.riseofthebird.data.Lightning;
 import com.riseofthebird.data.Mouse;
@@ -12,7 +11,6 @@ import com.riseofthebird.data.Phase;
 import com.riseofthebird.data.Thord;
 import com.riseofthebird.data.Vec2;
 import com.riseofthebird.data.World;
-import com.riseofthebird.logic.Birds;
 import com.riseofthebird.logic.Worlds;
 import edu.princeton.cs.introcs.StdDraw;
 import java.awt.Color;
@@ -81,7 +79,7 @@ public final class Renderer {
     public static void render(World world, Background background) {
         switch (world.phase()) {
             case READY, AIMING_ANGLE, AIMING_POWER, FLYING -> renderRound(world, background);
-            case GAME_OVER -> renderGameOver(world);
+            case GAME_OVER -> renderGameOver(world.playerWon());
         }
     }
 
@@ -100,15 +98,18 @@ public final class Renderer {
         // Bird and any skill-spawned visual effect.
         Bird bird = world.bird();
         if (bird != null) {
-            renderBird(bird, world.phase(), world.controller());
+            boolean skillActive = world.phase() == Phase.FLYING && world.controller().skillActivated();
+            renderBird(bird, skillActive);
         }
 
         // Phase-specific overlays.
         switch (world.phase()) {
             case AIMING_ANGLE -> {
-                if (bird != null) renderAimingArrow(world.controller(), bird);
+                if (bird != null) {
+                    renderAimingArrow(world.controller().angle(), bird.state().spawn());
+                }
             }
-            case AIMING_POWER -> renderPowerBar(world.controller());
+            case AIMING_POWER -> renderPowerBar(world.controller().powerFrame());
             default -> {
                 // No overlay for READY or FLYING.
             }
@@ -118,18 +119,26 @@ public final class Renderer {
         renderHpBar(world.mice());
     }
 
-    private static void renderBird(Bird bird, Phase phase, ControllerState controller) {
+    private static void renderBird(Bird bird, boolean skillActive) {
         switch (bird) {
             case Thord thord -> {
-                drawBirdSprite(thord.state().pos(), bird.state().form(), Sprites.THORD,
-                    Thord.SIZE, bird.state().angle());
-                if (phase == Phase.FLYING && controller.skillActivated()) {
+                drawBirdSprite(
+                    thord.state().pos(),
+                    bird.state().form(),
+                    Sprites.THORD,
+                    Thord.SIZE,
+                    bird.state().angle()
+                );
+                if (skillActive) {
                     renderLightning(thord.bolt());
                 }
             }
             case Bulk bulk -> drawBirdSprite(
-                bulk.state().pos(), bulk.state().form(), Sprites.BULK,
-                bulk.size(), bulk.state().angle()
+                bulk.state().pos(),
+                bulk.state().form(),
+                Sprites.BULK,
+                bulk.size(),
+                bulk.state().angle()
             );
         }
     }
@@ -146,14 +155,7 @@ public final class Renderer {
         String frame = Assets.optional("bird/thord/lightning/frame_1.png");
         if (frame == null) return;
         if (!bolt.spawned() || bolt.struck()) return;
-        StdDraw.picture(
-            bolt.pos().x(),
-            bolt.pos().y(),
-            frame,
-            Lightning.SIZE,
-            Lightning.SIZE,
-            bolt.angle() + 100
-        );
+        StdDraw.picture(bolt.pos().x(), bolt.pos().y(), frame, Lightning.SIZE, Lightning.SIZE, bolt.angle() + 100);
     }
 
     private static void renderMouse(Mouse mouse) {
@@ -165,19 +167,18 @@ public final class Renderer {
         StdDraw.picture(mouse.pos().x(), mouse.pos().y(), frame, mouse.size(), mouse.size());
     }
 
-    private static void renderAimingArrow(ControllerState controller, Bird bird) {
+    private static void renderAimingArrow(double angle, Vec2 spawn) {
         if (ARROW_PATH == null) return;
         double distance = ARROW_WIDTH / 2.0 + ARROW_GAP;
-        Vec2 spawn = bird.state().spawn();
-        double angleRad = Math.toRadians(controller.angle());
+        double angleRad = Math.toRadians(angle);
         double arrowX = spawn.x() + distance * Math.cos(angleRad);
         double arrowY = spawn.y() + distance * Math.sin(angleRad);
-        StdDraw.picture(arrowX, arrowY, ARROW_PATH, ARROW_WIDTH, ARROW_HEIGHT, controller.angle());
+        StdDraw.picture(arrowX, arrowY, ARROW_PATH, ARROW_WIDTH, ARROW_HEIGHT, angle);
     }
 
-    private static void renderPowerBar(ControllerState controller) {
+    private static void renderPowerBar(int frame) {
         if (POWER_FRAMES.isEmpty()) return;
-        int idx = Math.min(Math.max(controller.powerFrame(), 0), POWER_FRAMES.size() - 1);
+        int idx = Math.min(Math.max(frame, 0), POWER_FRAMES.size() - 1);
         StdDraw.picture(
             0,
             -Worlds.WORLD_HEIGHT / 2.0 + 50,
@@ -204,21 +205,15 @@ public final class Renderer {
     // Game-over screen
     // =====================================================================
 
-    private static void renderGameOver(World world) {
+    private static void renderGameOver(boolean playerWon) {
         StdDraw.clear(Color.BLACK);
-        String banner = world.playerWon() ? WON_PATH : LOST_PATH;
+        String banner = playerWon ? WON_PATH : LOST_PATH;
         if (banner != null) {
-            int width = world.playerWon() ? Worlds.WORLD_WIDTH / 2 : Worlds.WORLD_WIDTH;
+            int width = playerWon ? Worlds.WORLD_WIDTH / 2 : Worlds.WORLD_WIDTH;
             StdDraw.picture(0, 0, banner, width, Worlds.WORLD_HEIGHT);
         }
         if (REPLAY_PATH != null) {
-            StdDraw.picture(
-                0,
-                -Worlds.WORLD_HEIGHT / 2.0 + 80,
-                REPLAY_PATH,
-                REPLAY_PROMPT_WIDTH,
-                REPLAY_PROMPT_HEIGHT
-            );
+            StdDraw.picture(0, -Worlds.WORLD_HEIGHT / 2.0 + 80, REPLAY_PATH, REPLAY_PROMPT_WIDTH, REPLAY_PROMPT_HEIGHT);
         }
     }
 
