@@ -38,21 +38,10 @@ public final class Worlds {
     /**
      * Evolves the world by one tick under the supplied input snapshot.
      * Pure: returns a new {@link World}; does not mutate the input.
-     */
-    public static World tick(World w, InputSnapshot in) {
-        return switch (w.phase()) {
-            case READY -> tickReady(w, in);
-            case AIMING_ANGLE -> tickAimingAngle(w, in);
-            case AIMING_POWER -> tickAimingPower(w, in, /*powerFrameCount=*/ 0);
-            case FLYING -> tickFlying(w, in);
-            case GAME_OVER -> tickGameOver(w, in);
-        };
-    }
-
-    /**
-     * Same as {@link #tick(World, InputSnapshot)} but lets the caller supply
-     * the available power-bar frame count. The runtime knows that count
-     * from the asset layer; pure callers (tests) can pass any value.
+     *
+     * @param powerFrameCount number of available power-bar frames; the
+     *                        runtime reads this from the asset layer, tests
+     *                        pass whatever value matches the scenario
      */
     public static World tick(World w, InputSnapshot in, int powerFrameCount) {
         return switch (w.phase()) {
