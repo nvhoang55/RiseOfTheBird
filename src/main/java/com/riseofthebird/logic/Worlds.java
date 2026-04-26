@@ -1,11 +1,13 @@
 package com.riseofthebird.logic;
 
 import com.riseofthebird.data.Bird;
+import com.riseofthebird.data.Bulk;
 import com.riseofthebird.data.ControllerState;
 import com.riseofthebird.data.Hit;
 import com.riseofthebird.data.InputSnapshot;
 import com.riseofthebird.data.Mouse;
 import com.riseofthebird.data.Phase;
+import com.riseofthebird.data.Thord;
 import com.riseofthebird.data.Vec2;
 import com.riseofthebird.data.World;
 import java.util.ArrayList;
@@ -85,8 +87,8 @@ public final class Worlds {
 
         // While SPACE is held, the angle oscillates and is mirrored onto the bird.
         if (in.spaceDown()) {
-            ctrl = Controllers.tickAngle(ctrl);
-            bird = Controllers.applyAngle(ctrl.angle(), bird);
+            ctrl = tickAngle(ctrl);
+            bird = Birds.replaceState(bird, bird.state().withAngle(ctrl.angle()));
         }
 
         World next = w.withController(ctrl).withCurrentBirdReplaced(bird);
@@ -94,7 +96,7 @@ public final class Worlds {
 
         // Releasing SPACE locks the angle and moves to the power phase.
         if (in.wasSpaceReleased()) {
-            bird = Controllers.applyAngle(ctrl.angle(), bird);
+            bird = Birds.replaceState(bird, bird.state().withAngle(ctrl.angle()));
             next = next.withCurrentBirdReplaced(bird).withPhase(Phase.AIMING_POWER);
         }
         return next;
@@ -108,14 +110,14 @@ public final class Worlds {
         ControllerState ctrl = w.controller();
 
         if (in.spaceDown()) {
-            ctrl = Controllers.tickPower(ctrl, powerFrameCount);
+            ctrl = tickPower(ctrl, powerFrameCount);
         }
 
         World next = w.withController(ctrl);
         next = withMiceAdvanced(next);
 
         if (in.wasSpaceReleased()) {
-            Bird launched = Controllers.applyPower(ctrl.velocity(), next.bird());
+            Bird launched = Birds.replaceState(next.bird(), next.bird().state().withVelocity(ctrl.velocity()));
             next = next.withCurrentBirdReplaced(launched).withPhase(Phase.FLYING);
         }
         return next;
@@ -130,7 +132,7 @@ public final class Worlds {
 
         // SPACE during flight latches the skill; subsequent presses are no-ops.
         if (in.wasSpacePressed()) {
-            ctrl = Controllers.activateSkill(ctrl);
+            ctrl = ctrl.withSkillActivated(true);
         }
 
         Bird bird = w.bird();
@@ -176,6 +178,44 @@ public final class Worlds {
             return World.freshRun(freshRoster);
         }
         return w;
+    }
+
+    // =====================================================================
+    // Controller oscillators
+    // =====================================================================
+
+    /**
+     * Advances the oscillating aim by one tick. Flips direction once the
+     * angle overshoots {@link ControllerState#MAX_ANGLE} or dips below zero.
+     */
+    private static ControllerState tickAngle(ControllerState s) {
+        int direction = s.angleDirection();
+        if (s.angle() >= ControllerState.MAX_ANGLE || s.angle() < 0) {
+            direction = -direction;
+        }
+        double newAngle = s.angle() + ControllerState.ANGLE_STEP * direction;
+        return s.withAngle(newAngle).withAngleDirection(direction);
+    }
+
+    /**
+     * Advances the oscillating power-bar by one tick. Bounces off either end
+     * of the bar and recomputes the derived velocity. {@code frameCount <= 0}
+     * is a no-op (e.g. when the asset is missing).
+     */
+    private static ControllerState tickPower(ControllerState s, int frameCount) {
+        if (frameCount <= 0) {
+            return s;
+        }
+        int direction = s.powerDirection();
+        int frame = s.powerFrame();
+        if (frame <= 0) {
+            direction = 1;
+        } else if (frame >= frameCount - 1) {
+            direction = -1;
+        }
+        int newFrame = frame + direction;
+        double newVelocity = newFrame * ControllerState.VELOCITY_MULTIPLIER;
+        return s.withPowerFrame(newFrame).withPowerDirection(direction).withVelocity(newVelocity);
     }
 
     // =====================================================================
@@ -262,8 +302,8 @@ public final class Worlds {
      */
     private static Bird respawn(Bird bird) {
         return switch (bird) {
-            case com.riseofthebird.data.Thord t -> com.riseofthebird.data.Thord.atSpawn();
-            case com.riseofthebird.data.Bulk b -> com.riseofthebird.data.Bulk.atSpawn();
+            case Thord t -> Thord.atSpawn();
+            case Bulk b -> Bulk.atSpawn();
         };
     }
 
