@@ -41,6 +41,9 @@ public final class Renderer {
     /** Optional aiming-arrow sprite; {@code null} when the asset is missing. */
     private static final String ARROW_PATH = Assets.optional("controller/angle/arrow.png");
 
+    /** Optional lightning sprite; {@code null} when the asset is missing. */
+    private static final String LIGHTNING_FRAME = Assets.optional("bird/thord/lightning/frame_1.png");
+
     private static final int POWER_BAR_HEIGHT = 70;
     private static final int ARROW_WIDTH = 150;
     private static final int ARROW_HEIGHT = 150;
@@ -152,10 +155,16 @@ public final class Renderer {
     }
 
     private static void renderLightning(Lightning bolt) {
-        String frame = Assets.optional("bird/thord/lightning/frame_1.png");
-        if (frame == null) return;
+        if (LIGHTNING_FRAME == null) return;
         if (!bolt.spawned() || bolt.struck()) return;
-        StdDraw.picture(bolt.pos().x(), bolt.pos().y(), frame, Lightning.SIZE, Lightning.SIZE, bolt.angle() + 100);
+        StdDraw.picture(
+            bolt.pos().x(),
+            bolt.pos().y(),
+            LIGHTNING_FRAME,
+            Lightning.SIZE,
+            Lightning.SIZE,
+            bolt.angle() + 100
+        );
     }
 
     private static void renderMouse(Mouse mouse) {

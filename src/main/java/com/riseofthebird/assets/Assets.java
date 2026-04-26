@@ -29,8 +29,4 @@ public final class Assets {
         URL url = Assets.class.getResource(path);
         return (url == null) ? null : path;
     }
-
-    public static boolean exists(String relativePath) {
-        return Assets.class.getResource(ROOT + relativePath) != null;
-    }
 }

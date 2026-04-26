@@ -23,8 +23,9 @@ public final class Lightnings {
 
     /**
      * Advances the bolt one tick: checks for collisions against any live
-     * mouse in {@code mice}, applies damage if it hits, and steps the bolt
-     * forward along its initial heading.
+     * mouse in {@code mice}. If it hits, damage is applied and the bolt
+     * latches as struck without stepping further; otherwise it steps forward
+     * along its initial heading.
      *
      * <p>No-op when the bolt has not been spawned yet, or when it has
      * already struck a target.
@@ -53,12 +54,11 @@ public final class Lightnings {
             }
         }
 
-        // Even on a hit the bolt advances one more step so the renderer can
-        // paint the strike at the impact frame; the next tick will short-circuit
-        // via the struck-latch check above.
-        nextBolt = step(nextBolt);
+        if (hit) {
+            return new Advance(nextBolt, nextMice, 1);
+        }
 
-        return new Advance(nextBolt, nextMice, hit ? 1 : 0);
+        return new Advance(step(nextBolt), nextMice, 0);
     }
 
     /** Translates the bolt one tick along its heading. */
