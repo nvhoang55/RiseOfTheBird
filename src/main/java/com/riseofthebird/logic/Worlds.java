@@ -6,6 +6,7 @@ import com.riseofthebird.data.Hit;
 import com.riseofthebird.data.InputSnapshot;
 import com.riseofthebird.data.Mouse;
 import com.riseofthebird.data.Phase;
+import com.riseofthebird.data.Vec2;
 import com.riseofthebird.data.World;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,7 +157,9 @@ public final class Worlds {
         World next = w.withController(ctrl).withCurrentBirdReplaced(bird).withMice(mice).withScore(score);
 
         boolean roundEnded =
-            Birds.isOverreached(bird, WORLD_WIDTH, WORLD_HEIGHT) || score >= World.WIN_THRESHOLD || next.allMiceDead();
+            Birds.isOverreached(bird.state().pos(), Birds.sizeOf(bird), WORLD_WIDTH, WORLD_HEIGHT) ||
+            score >= World.WIN_THRESHOLD ||
+            next.allMiceDead();
 
         return roundEnded ? endRound(next) : next;
     }
@@ -206,7 +209,9 @@ public final class Worlds {
         int hits = 0;
 
         for (Mouse mouse : mice) {
-            Hit hit = Mice.collide(mouse, currentBird);
+            Vec2 attackerPos = currentBird.state().pos();
+            int attackerSize = Birds.sizeOf(currentBird);
+            Hit hit = Mice.collide(mouse, attackerPos, attackerSize);
             Mouse afterHit = switch (hit) {
                 case Hit.Landed(Mouse damaged) -> damaged;
                 case Hit.Missed m -> mouse;

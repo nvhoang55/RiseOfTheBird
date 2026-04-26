@@ -1,6 +1,5 @@
 package com.riseofthebird.logic;
 
-import com.riseofthebird.data.Bird;
 import com.riseofthebird.data.Hit;
 import com.riseofthebird.data.Mouse;
 import com.riseofthebird.data.Vec2;
@@ -37,10 +36,7 @@ public final class Mice {
         int newDistance = mouse.distance() + step;
         Vec2 newPos = new Vec2(mouse.spawn().x() + newDistance, mouse.spawn().y());
 
-        return mouse
-            .withStep(step)
-            .withDistance(newDistance)
-            .withPos(newPos);
+        return mouse.withStep(step).withDistance(newDistance).withPos(newPos);
     }
 
     /**
@@ -60,29 +56,25 @@ public final class Mice {
             newStep += direction * Mouse.STEP_GROWTH_PER_HIT;
         }
 
-        return mouse
-            .withHp(mouse.hp() - 1)
-            .withSize(newSize)
-            .withStep(newStep)
-            .withJustGotHit(true);
+        return mouse.withHp(mouse.hp() - 1).withSize(newSize).withStep(newStep).withJustGotHit(true);
     }
 
     /**
-     * Checks the mouse against an attacking bird for a collision on this
+     * Checks the mouse against an attacker's geometry for a collision on this
      * tick. Returns a {@link Hit.Landed} carrying the post-damage mouse on
-     * overlap (the bird is knocked back separately by the caller); returns
+     * overlap (the attacker is knocked back separately by the caller); returns
      * {@link Hit.Missed#INSTANCE} otherwise.
      *
      * <p>The per-round {@code justGotHit} latch suppresses repeat hits from
      * the same attacker until the latch is cleared by
      * {@link #clearHitLatch(Mouse)} between rounds.
      */
-    public static Hit collide(Mouse mouse, Bird bird) {
+    public static Hit collide(Mouse mouse, Vec2 attackerPos, int attackerSize) {
         if (mouse.justGotHit() || !mouse.isAlive()) {
             return Hit.Missed.INSTANCE;
         }
-        double reach = mouse.size() / 3.0 + Birds.sizeOf(bird) / 3.0;
-        if (mouse.pos().distanceTo(bird.state().pos()) <= reach) {
+        double reach = mouse.size() / 3.0 + attackerSize / 3.0;
+        if (mouse.pos().distanceTo(attackerPos) <= reach) {
             return new Hit.Landed(takeDamage(mouse));
         }
         return Hit.Missed.INSTANCE;

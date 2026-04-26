@@ -94,14 +94,12 @@ public final class Birds {
     }
 
     /**
-     * True once the bird has flown off the right edge of the world or below
-     * the bottom of the world. The current round ends at that point.
+     * True once a bird at {@code pos} with the given hitbox {@code size} has
+     * flown off the right edge of the world or below the bottom of the world.
+     * The current round ends at that point.
      */
-    public static boolean isOverreached(Bird bird, int worldWidth, int worldHeight) {
-        double x = bird.state().pos().x();
-        double y = bird.state().pos().y();
-        int size = sizeOf(bird);
-        return (x - size) >= worldWidth || (y - size) <= -worldHeight;
+    public static boolean isOverreached(Vec2 pos, int size, int worldWidth, int worldHeight) {
+        return (pos.x() - size) >= worldWidth || (pos.y() - size) <= -worldHeight;
     }
 
     /** Render and hitbox size for the given bird kind. */
